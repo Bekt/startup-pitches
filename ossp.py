@@ -55,14 +55,14 @@ class HHProbs(object):
 
     def run(self):
         posts = self.fb_posts()
-        posts = filter(self._filt, posts)
+        posts = filter(lambda x: self._filt(x, 10), posts)
         print(len(posts))
         self.tweet_posts(posts)
 
     def seed(self, since, until):
         """Populate timeline. Run this when the account is brand new."""
-        posts = self._seed(since, until)
-        posts = filter(self._filt, posts)
+        posts = self.fb_posts(since=since, until=until, count=5000)
+        posts = filter(lambda x: self._filt(x, 40), posts)
         print(len(posts))
         self.tweet_posts(posts, seed=True)
 
@@ -86,47 +86,34 @@ class HHProbs(object):
         status = (self.hh_tag + text)[:140]
         self.tw_api.update_status(status)
 
-    def fb_posts(self, limit=30):
-        resp = self.fb_api.get_connections(
-                self.fb_group_id, 'feed', limit=limit,
-                fields='message,created_time,likes.limit(50)', **kwargs)
-        posts = resp.get('data', [])
-        # Order by created_time (default is updated_time).
-        for post in posts:
-            created_date = datetime.strptime(post['created_time'][:-5],
-                                             '%Y-%m-%dT%H:%M:%S')
-            post['created_time'] = created_date
-        posts.sort(key=lambda x: x['created_time'])
-        return posts
-
     @classmethod
-    def _filt(self, post):
+    def _filt(self, post, likes):
         # 200 is random, anything that long is
         # most likely a rant or spam?
         msg = post.get('message', '')
-        return (len(msg) < 200 
-                and ('likes' in post and len(post['likes']['data']) > 39))
+        return (len(msg) < 200
+                and ('likes' in post and len(post['likes']['data']) >= likes))
 
-    def _seed(self, since, until, limit=500):
+    def fb_posts(self, since=None, until=None, count=30):
         def req(**kwargs):
             return self.fb_api.get_connections(
-                    self.fb_group_id, 'feed', limit=limit,
+                    self.fb_group_id, 'feed', limit=min(200, count),
                     fields='message,created_time,likes.limit(50)', **kwargs)
-        resp = req(since=since, until=until)
-        posts = []
+        resp = req(until=until)
+        posts = resp['data']
         while ('paging' in resp and 'next' in resp['paging']
                 and resp['paging']['next']
+                and since < until
                 and len(resp['data']) > 1
-                and len(posts) < 5000):
+                and len(posts) < count):
             try:
-                posts.extend(resp['data'])
                 print(len(posts))
                 url = urlparse.urlparse(resp['paging']['next'])
-                until = urlparse.parse_qs(url.query)['until'][0]
-                resp = req(until=int(until))
+                until = int(urlparse.parse_qs(url.query)['until'][0])
+                resp = req(until=until)
+                posts.extend(resp['data'])
             except:
                 pass
-        print('done')
         # Order by created_time (default is updated_time).
         for post in posts:
             created_date = datetime.strptime(post['created_time'][:-5],
@@ -139,4 +126,4 @@ class HHProbs(object):
 if __name__ == '__main__':
     hh = HHProbs()
     hh.run()
-    #hh.seed(since=1409429019, until=1410811419)
+    # hh.seed(since=1409429019, until=1410811419)
