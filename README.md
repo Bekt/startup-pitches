@@ -1,13 +1,16 @@
-## HH Problems Twitter Bot
+## One Sentence Startup Pitches Twitter Bot
+
+Forked from: [hh-problems](https://github.com/Bekt/hh-problems-bot)
+
 A bot that periodically (every hour) checks the 
-[HH Hacker Problems](https://www.facebook.com/groups/hhproblems/) Facebook 
-group feed and tweets if there is anything interesting with 
-[@hh_problems](https://twitter.com/hh_problems).
+[One Sentence Startup Pitches](https://www.facebook.com/groups/1500321840185061/)
+Facebook group feed and tweets if there is anything interesting with 
+[@OneStartupPitch](https://twitter.com/OneStartupPitch).
 
 ## Installation
 
 ```bash
-git clone git@github.com:Bekt/hh-problems-bot.git
+git clone git@github.com:Bekt/startup-pitches.git
 cd hh-problems-bot
 
 # (Optional)
@@ -26,9 +29,15 @@ Valid [Facebook app](https://developers.facebook.com) and
 
 2. Run `python get_access_tokens.py` to generate access tokens.
 
-3. Edit `credentials.txt` with outputted values.
+3. `cp credentials.txt credentials.py`
 
-4. `cp credentials.txt credentials.py`
+4. Edit `credentials.py` with outputted values.
+
+## Running
+Invoke the script using `cron` or some other kind of scheduling tool:
+```
+python ossp.py
+```
 
 ## License
 [The MIT License](http://opensource.org/licenses/MIT)
