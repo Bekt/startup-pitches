@@ -13,7 +13,7 @@ Facebook group feed and tweets if there is anything interesting with
 
 ```bash
 git clone git@github.com:Bekt/startup-pitches.git
-cd hh-problems-bot
+cd startup-pitches
 
 # (Optional)
 virtualenv venv
