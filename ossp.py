@@ -1,3 +1,4 @@
+ # -*- coding: utf-8 -*-
 """Twitter Bot for One Sentence Startup Pitch Facebook group.
 
 This script periodically updates the Twitter account @OneStartupPitch
@@ -16,6 +17,7 @@ import facebook
 import tweepy
 import time
 import urlparse
+import os
 
 from datetime import datetime
 
@@ -60,10 +62,35 @@ class HHProbs(object):
         self.tweet_posts(posts)
 
     def seed(self, since, until):
-        """Populate timeline. Run this when the account is brand new."""
-        posts = self.fb_posts(since=since, until=until, count=5000)
-        posts = filter(lambda x: self._filt(x, 40), posts)
+        """Run this when the account is brand new."""
+        posts = self.fb_posts(since=since, until=until, count=15000)
+        with open('posts_30.txt', 'w') as a, open('posts_10.txt', 'w') as b:
+            post10 = { p['message'].strip() for p in posts if self._filt(p, 10) and not self._filt(p, 30) }
+            post30 = { p['message'].strip() for p in posts if self._filt(p, 30) }
+            a.write(os.linesep.join([p.replace('\n', ' ').encode('utf-8') for p in post30]))
+            b.write(os.linesep.join([p.replace('\n', ' ').encode('utf-8') for p in post10]))
+        posts = filter(lambda x: self._filt(x, 30), posts)
         print(len(posts))
+        self.tweet_posts(posts, seed=True)
+
+    def run_seed(self):
+        """Gets one tweet from posts_30.txt and two from posts_10.txt."""
+        # What do we say to efficiency? Not Today!
+        af, bf = 'posts_30.txt', 'posts_10.txt'
+        posts = []
+        with open(af, 'r') as a, open(bf, 'r') as b:
+            post30 = a.read().splitlines()
+            post10 = b.read().splitlines()
+        if len(post30) < 1 and len(post10) < 2:
+            return self.run()
+        if len(post10) > 1:
+            posts.append({'message': post10[0]})
+            posts.append({'message': post10[1]})
+        if len(post30):
+            posts.append({'message': post30[0]})
+        with open(af, 'w') as a, open(bf, 'w') as b:
+            a.write(os.linesep.join([p for p in post30[1:]] ))
+            b.write(os.linesep.join([p for p in post10[2:]] ))
         self.tweet_posts(posts, seed=True)
 
     def tweet_posts(self, posts, seed=False):
@@ -91,7 +118,7 @@ class HHProbs(object):
         # 200 is random, anything that long is
         # most likely a rant or spam?
         msg = post.get('message', '')
-        return (len(msg) < 200
+        return (2 < len(msg) < 200
                 and ('likes' in post and len(post['likes']['data']) >= likes))
 
     def fb_posts(self, since=None, until=None, count=30):
@@ -125,5 +152,6 @@ class HHProbs(object):
 
 if __name__ == '__main__':
     hh = HHProbs()
-    hh.run()
-    # hh.seed(since=1409429019, until=1410811419)
+    #hh.run()
+    #hh.seed(since=0, until=1419124509)
+    hh.run_seed()
